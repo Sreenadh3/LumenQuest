@@ -20,8 +20,9 @@ try:
         print("Tables in the database:")
         for table in tables:
             print(f"- {table[0]}")
-        cursor.execute("INSERT INTO Users(UserID) VALUES(3);")
+        cursor.execute("INSERT INTO Users (full_name, email, phone_number, role) VALUES ('John Doe', 'john.doe@example.com', '123-456-7890', 'END_USER');")
         cursor.execute("SELECT * FROM Users;")
+
         rows = cursor.fetchall()
 
         for row in rows:
