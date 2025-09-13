@@ -1,6 +1,6 @@
 # app.py
 from flask import Flask, request, jsonify, g
-from backend.trial_dbb import get_connection
+from db import get_connection
 from utils import hash_password, verify_password, generate_jwt, auth_required, admin_required, write_audit
 import pyodbc
 from datetime import datetime, timedelta
@@ -38,9 +38,8 @@ def signup():
         # get user_id
         cur.execute("SELECT SCOPE_IDENTITY()")
         user_id_row = cur.fetchone()
-        user_id = None
-        if user_id_row:
-            user_id = int(user_id_row[0])
+        user_id = user_id_row[0] if user_id_row else None
+
 
         # Insert login
         cur.execute("INSERT INTO User_Logins (user_id, username, password_hash) VALUES (?, ?, ?)",

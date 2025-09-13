@@ -4,7 +4,7 @@ import jwt
 import os
 from functools import wraps
 from flask import request, jsonify, g
-from backend.trial_dbb import get_connection
+from db import get_connection
 from datetime import datetime, timedelta
 from dotenv import load_dotenv
 
