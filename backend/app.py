@@ -5,6 +5,16 @@ from utils import hash_password, verify_password, generate_jwt, auth_required, a
 import pyodbc
 from datetime import datetime, timedelta
 import os
+import pickle
+import numpy as np
+
+# Load churn model once during app startup
+with open("churn_model.pkl", "rb") as f:
+    churn_model = pickle.load(f)
+
+
+with open("random_forest_model.pkl", "rb") as f:
+    rf_model = pickle.load(f)
 
 app = Flask(__name__)
 
@@ -42,7 +52,7 @@ def signup():
 
 
         # Insert login
-        cur.execute("INSERT INTO User_Logins (user_id, username, password_hash) VALUES (?, ?, ?)",
+        cur.execute("INSERT INTO User_Logins (user_id,username, password_hash) VALUES (?, ?)",
                     (user_id, username, pwd_hash))
         conn.commit()
 
@@ -482,6 +492,50 @@ def get_audit_logs():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"}), 200
+
+# ---------------------------
+# Churn Prediction Endpoint
+# ---------------------------
+@app.route("/predict-churn", methods=["POST"])
+def predict_churn():
+    data = request.json or {}
+    features = data.get("features")
+    if not features:
+        return jsonify({"error": "features required"}), 400
+
+    try:
+        X = np.array(features).reshape(1, -1)
+        pred = churn_model.predict(X)[0]
+        prob = churn_model.predict_proba(X)[0].tolist()
+        return jsonify({
+            "prediction": int(pred),
+            "probability": prob
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "prediction failed", "details": str(e)}), 500
+
+# ---------------------------
+# Random Forest Prediction Endpoint
+# ---------------------------
+@app.route("/predict-rf", methods=["POST"])
+def predict_rf():
+    data = request.json or {}
+    features = data.get("features")
+    if not features:
+        return jsonify({"error": "features required"}), 400
+
+    try:
+        import numpy as np
+        X = np.array(features).reshape(1, -1)
+        pred = rf_model.predict(X)[0]
+        prob = rf_model.predict_proba(X)[0].tolist()
+        return jsonify({
+            "prediction": int(pred) if hasattr(pred, "item") else pred,
+            "probability": prob
+        }), 200
+    except Exception as e:
+        return jsonify({"error": "prediction failed", "details": str(e)}), 500
+
 
 if __name__ == "__main__":
     # optionally set FLASK_ENV=development
