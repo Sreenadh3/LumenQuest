@@ -8,6 +8,12 @@ import os
 import pickle
 import numpy as np
 
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app)  # allow all origins (React 3000 will work)
+
+
 # Load churn model once during app startup
 with open("churn_model.pkl", "rb") as f:
     churn_model = pickle.load(f)
@@ -52,8 +58,8 @@ def signup():
 
 
         # Insert login
-        cur.execute("INSERT INTO User_Logins (user_id,username, password_hash) VALUES (?, ?)",
-                    (user_id, username, pwd_hash))
+        cur.execute("INSERT INTO User_Logins (username, password_hash) VALUES (?, ?)",
+                    (username, pwd_hash))
         conn.commit()
 
         write_audit(user_id, "CREATE_USER", target_id=user_id, target_table="Users", details=f"role={role}")
